@@ -8,6 +8,43 @@ use Illuminate\Support\Facades\File;
 
 class PropertyController extends Controller
 {
+    public function searchProperties(Request $request)
+    {
+        // Validate incoming request parameters
+        $request->validate([
+            'location' => 'nullable|string',
+            'minPrice' => 'nullable|numeric',
+            'maxPrice' => 'nullable|numeric',
+            'type' => 'nullable|string',
+        ]);
+
+        // Start with the Property model
+        $query = Property::query();
+
+     
+        if ($request->has('location') && $request->location != '') {
+            $query->where('location', $request->location);
+        }
+
+        if ($request->has('minPrice') && $request->minPrice != '') {
+            // The priceRange is stored as a string with a format like "15000 - 16000"
+            $query->whereRaw("CAST(SUBSTRING_INDEX(priceRange, ' - ', 1) AS UNSIGNED) >= ?", [$request->minPrice]);
+        }
+
+        if ($request->has('maxPrice') && $request->maxPrice != '') {
+            // The priceRange is stored as a string with a format like "15000 - 16000"
+            $query->whereRaw("CAST(SUBSTRING_INDEX(priceRange, ' - ', -1) AS UNSIGNED) <= ?", [$request->maxPrice]);
+        }
+
+        if ($request->has('type') && $request->type != '') {
+            $query->where('developmentType', $request->type);
+        }
+
+        // Fetch the filtered properties
+        $properties = $query->get();
+
+        return response()->json($properties);
+    }
   public function getPropertyStatistics()
 {
     $totalProperties = Property::count(); // ✅ Count all properties
