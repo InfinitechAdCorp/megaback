@@ -163,18 +163,16 @@ public function update(Request $request, $id)
 
     // Get a single event by ID
     public function show($id)
-    {
-        $event = Event::find($id);
+{
+    $event = Event::find($id);
 
-        if (!$event) {
-            return response()->json(['message' => 'Event not found'], 404);
-        }
-
-        // Return the full URL of the media (public access)
-        $event->image = asset($event->image);
-
-        return response()->json($event);
+    if (!$event) {
+        return response()->json(['message' => 'Event not found'], 404);
     }
+
+    return response()->json($event);
+}
+
 
     // Update an event
     

@@ -55,19 +55,17 @@ class SeminarController extends Controller
     }
 
     // Get a single seminar by ID
-    public function show($id)
-    {
-        $seminar = Seminar::find($id);
+public function show($id)
+{
+    $seminar = Seminar::find($id);
 
-        if (!$seminar) {
-            return response()->json(['message' => 'Seminar not found'], 404);
-        }
-
-        // Return the full URL of the image (public access)
-        $seminar->image = asset($seminar->image);
-
-        return response()->json($seminar);
+    if (!$seminar) {
+        return response()->json(['message' => 'Seminar not found'], 404);
     }
+
+    return response()->json($seminar);
+}
+
 
     public function update(Request $request, $id)
 {

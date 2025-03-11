@@ -52,18 +52,16 @@ class RealEstateTipsController extends Controller
     }
 
     // Get a single tip by ID
-    public function show($id)
-    {
-        $tip = RealEstateTips::find($id);
+public function show($id)
+{
+    $tip = RealEstateTips::find($id);
 
-        if (!$tip) {
-            return response()->json(['message' => 'Tip not found'], 404);
-        }
-
-        $tip->image = asset($tip->image);
-
-        return response()->json($tip);
+    if (!$tip) {
+        return response()->json(['message' => 'Tip not found'], 404);
     }
+
+    return response()->json($tip);
+}
 
     // Update a tip
     public function update(Request $request, $id)

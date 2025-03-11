@@ -1,6 +1,12 @@
 <?php
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
+use App\Models\User;
+use App\Mail\AccountApprovedMail;
+use App\Mail\VerificationMail;
+
 use App\Http\Controllers\{
     StatusController,
     LocationController,
@@ -18,16 +24,11 @@ use App\Http\Controllers\{
     OfficeController,
     PropertyController,
     PushNotificationController,
-    AuthController
+    AuthController,
+    ScheduledVisitController,
+    PropertyInquiryController,
+    ClientAppointmentController
 };
-
-
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use App\Models\User;
-use App\Mail\AccountApprovedMail;
-use App\Mail\VerificationMail;
-
 
 Route::get('/verification/{id}', function ($id) {
     $user = User::find($id);
@@ -48,7 +49,7 @@ Route::get('/verification/{id}', function ($id) {
     Log::info("User approved: {$user->email}");
 
     try {
-        // ✅ Send email to inform the user
+     
         Mail::to($user->email)->send(new AccountApprovedMail($user));
 
         Log::info("Approval email sent to user: {$user->email}");
@@ -67,6 +68,52 @@ Route::post('/send-notification', [PushNotificationController::class, 'sendNotif
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/login', [AuthController::class, 'login']); 
 
+Route::prefix('clientappointments')->group(function () {
+   
+    Route::post('/', [ClientAppointmentController::class, 'store']);  // Create a new client appointment
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/', [ClientAppointmentController::class, 'index']);  // Fetch all appointments
+        Route::get('/{id}', [ClientAppointmentController::class, 'show']);  // Fetch a specific appointment by ID
+        Route::put('/status', [ClientAppointmentController::class, 'updateStatus']); // Update status (example)
+        Route::put('/{id}', [ClientAppointmentController::class, 'update']);  // Update a client appointment
+        Route::delete('/{id}', [ClientAppointmentController::class, 'destroy']);  // Delete a client appointment
+    });
+});
+
+Route::prefix('propertyinquiry')->group(function () {
+    Route::get('/', [PropertyInquiryController::class, 'index']); 
+    Route::get('/{id}', [PropertyInquiryController::class, 'show']); 
+    Route::post('/', [PropertyInquiryController::class, 'store']); 
+    Route::put('/status', [PropertyInquiryController::class, 'updateStatus']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::put('/{id}', [PropertyInquiryController::class, 'update']); 
+        Route::delete('/{id}', [PropertyInquiryController::class, 'destroy']); 
+    });
+});
+Route::prefix('schedulevisit')->group(function () {
+    Route::get('/', [ScheduledVisitController::class, 'index']); 
+    Route::get('/{id}', [ScheduledVisitController::class, 'show']); 
+    Route::post('/', [ScheduledVisitController::class, 'store']); 
+    Route::put('/status', [ScheduledVisitController::class, 'updateStatus']);
+
+    Route::middleware('auth:sanctum')->group(function () {
+        // Route::put('/{id}', [ScheduledVisitController::class, 'update']); 
+        Route::delete('/{id}', [ScheduledVisitController::class, 'destroy']); 
+    });
+});
+
+Route::prefix('office')->group(function () {
+    Route::get('/', [OfficeController::class, 'index']); 
+    Route::get('/{id}', [OfficeController::class, 'show']); 
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [OfficeController::class, 'store']); 
+        Route::post('/{id}', [OfficeController::class, 'update']);
+        Route::delete('/{id}', [OfficeController::class, 'destroy']); 
+    });
+});
+
 Route::prefix('count')->middleware('auth:sanctum')->group(function () {
     Route::get('/property', [PropertyController::class, 'getPropertyStatistics']);
     Route::get('/office', [OfficeController::class, 'getOfficeStatistics']);
@@ -82,23 +129,23 @@ Route::prefix('count')->middleware('auth:sanctum')->group(function () {
 
 
 Route::prefix('property')->group(function () {
-        Route::get('/search', [PropertyController::class, 'searchProperties']);
-    Route::get('/', [PropertyController::class, 'index']); // Public: Get all properties
-    Route::get('/{id}', [PropertyController::class, 'show']); // Public: Get a single property
+    Route::get('/search', [PropertyController::class, 'searchProperties']);
+    Route::get('/', [PropertyController::class, 'index']);
+    Route::get('/{id}', [PropertyController::class, 'show']); 
 
     Route::middleware('auth:sanctum')->group(function () {
-        Route::post('/', [PropertyController::class, 'store']); // Protected: Create a property
-        Route::post('/updateProperty/{id}', [PropertyController::class, 'updateProperty']); // Protected: Update property
-        Route::post('/updateFeature/{id}', [PropertyController::class, 'updateFeatures']); // Protected: Update features
-        Route::post('/updateAmenities/{id}', [PropertyController::class, 'updateAmenities']); // Protected: Update amenities
-        Route::delete('/{id}', [PropertyController::class, 'destroy']); // Protected: Delete a property
+        Route::post('/', [PropertyController::class, 'store']); 
+        Route::post('/updateProperty/{id}', [PropertyController::class, 'updateProperty']);
+        Route::post('/updateFeature/{id}', [PropertyController::class, 'updateFeatures']); 
+        Route::post('/updateAmenities/{id}', [PropertyController::class, 'updateAmenities']); 
+        Route::delete('/{id}', [PropertyController::class, 'destroy']); 
     });
 });
 
-// Office routes with public GET and protected POST, PUT, DELETE
+
 Route::prefix('office')->group(function () {
-    Route::get('/', [OfficeController::class, 'index']); // Public: Get all offices
-    Route::get('/{id}', [OfficeController::class, 'show']); // Public: Get a single office
+    Route::get('/', [OfficeController::class, 'index']); 
+    Route::get('/{id}', [OfficeController::class, 'show']); 
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [OfficeController::class, 'store']); // Protected: Create a new office

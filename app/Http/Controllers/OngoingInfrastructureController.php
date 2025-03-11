@@ -53,18 +53,17 @@ class OngoingInfrastructureController extends Controller
     }
 
     // Get a single infrastructure by ID
-    public function show($id)
-    {
-        $infrastructure = OngoingInfrastructure::find($id);
+public function show($id)
+{
+    $infrastructure = OngoingInfrastructure::find($id);
 
-        if (!$infrastructure) {
-            return response()->json(['message' => 'Infrastructure not found'], 404);
-        }
-
-        $infrastructure->image = asset($infrastructure->image);
-
-        return response()->json($infrastructure);
+    if (!$infrastructure) {
+        return response()->json(['message' => 'Infrastructure not found'], 404);
     }
+
+    return response()->json($infrastructure);
+}
+
 
     // Update an infrastructure record
     public function update(Request $request, $id)

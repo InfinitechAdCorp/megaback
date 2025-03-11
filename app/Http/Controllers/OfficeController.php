@@ -27,10 +27,9 @@ class OfficeController extends Controller
     {
         return response()->json(Office::all(), 200);
     }
-
-    public function store(Request $request)
+public function store(Request $request)
 {
-    \Log::info("🔹 Raw Request Data:", $request->all());  // ✅ Debugging
+    \Log::info("🔹 Raw Request Data:", $request->all());
     \Log::info("🔹 Uploaded File:", [$request->file('image')]);
 
     // Validate request
@@ -42,7 +41,7 @@ class OfficeController extends Controller
         'status' => 'required|string|in:For Lease,For Sale,For Rent',
         'price' => 'required|string',
         'lotArea' => 'required|string',
-        'amenities' => 'nullable|string',  // ✅ Accept string (JSON)
+        'amenities' => 'nullable|string',  // ✅ Accept JSON string
     ]);
 
     // Ensure directory exists
@@ -60,10 +59,10 @@ class OfficeController extends Controller
     $image->move(public_path('offices'), $imageName);
     $imagePath = '/offices/' . $imageName;
 
-    // ✅ Convert amenities JSON string to array before storing
+    // ✅ Convert JSON amenities string to array before storing
     $amenities = json_decode($request->input('amenities', '[]'), true);
 
-    // ✅ Create Office
+    // ✅ Store as an array (not JSON)
     $office = Office::create([
         'name' => $request->name,
         'description' => $request->description,
@@ -72,28 +71,27 @@ class OfficeController extends Controller
         'status' => $request->status,
         'price' => $request->price,
         'lotArea' => $request->lotArea,
-        'amenities' => json_encode($amenities),
+        'amenities' => $amenities,  // ✅ Store as an array
     ]);
 
     return response()->json($office, 201);
 }
 
-
     // Get a single office by ID
-    public function show($id)
-    {
-        $office = Office::find($id);
+public function show($id)
+{
+    $office = Office::find($id);
 
-        if (!$office) {
-            return response()->json(['message' => 'Office not found'], 404);
-        }
-
-        // Convert amenities to an array and return full image URL
-        $office->image = asset($office->image);
-        $office->amenities = json_decode($office->amenities, true);
-
-        return response()->json($office);
+    if (!$office) {
+        return response()->json(['message' => 'Office not found'], 404);
     }
+
+    // Convert amenities JSON string to an array
+    $office->amenities = json_decode($office->amenities, true);
+
+    return response()->json($office);
+}
+
 public function update(Request $request, $id)
 {
     $office = Office::find($id);
@@ -113,11 +111,12 @@ public function update(Request $request, $id)
         'status' => 'required|string|in:For Lease,For Sale,For Rent',
         'price' => 'required|string',
         'lotArea' => 'required|string',
-        'amenities' => 'nullable',
+        'amenities' => 'nullable|string',
     ]);
 
-    // ✅ Fix Amenities Handling
-    $office->amenities = json_encode(is_array($request->amenities) ? $request->amenities : json_decode($request->amenities, true));
+    // ✅ Fix Amenities Handling (Decode only if it's a string)
+    $amenities = is_array($request->amenities) ? $request->amenities : json_decode($request->amenities, true);
+    $office->amenities = $amenities;
 
     // ✅ Handle Image Upload
     if ($request->hasFile('image')) {

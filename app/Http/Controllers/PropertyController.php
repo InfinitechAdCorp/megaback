@@ -10,7 +10,7 @@ class PropertyController extends Controller
 {
     public function searchProperties(Request $request)
     {
-        // Validate incoming request parameters
+        
         $request->validate([
             'location' => 'nullable|string',
             'minPrice' => 'nullable|numeric',
@@ -164,20 +164,20 @@ public function store(Request $request)
 
 
     // Get a single property by ID
-    public function show($id)
-    {
-        $property = Property::find($id);
+public function show($id)
+{
+    $property = Property::find($id);
 
-        if (!$property) {
-            return response()->json(['message' => 'Property not found'], 404);
-        }
-
-        // Convert amenities to an array and return full image URL
-        $property->image = asset($property->image);
-        $property->amenities = json_decode($property->amenities, true);
-
-        return response()->json($property);
+    if (!$property) {
+        return response()->json(['message' => 'Property not found'], 404);
     }
+
+    // Decode amenities JSON safely
+    $property->amenities = json_decode($property->amenities, true) ?? [];
+
+    return response()->json($property);
+}
+
 public function updateFeatures(Request $request, $id)
 {
     \Log::info('Received Data:', $request->all());

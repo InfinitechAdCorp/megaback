@@ -49,18 +49,16 @@ class RealEstateNewsController extends Controller
     }
 
     // Get a single news article by ID
-    public function show($id)
-    {
-        $news = RealEstateNews::find($id);
+public function show($id)
+{
+    $news = RealEstateNews::find($id);
 
-        if (!$news) {
-            return response()->json(['message' => 'News article not found'], 404);
-        }
-
-        $news->image = asset($news->image);
-
-        return response()->json($news);
+    if (!$news) {
+        return response()->json(['message' => 'News article not found'], 404);
     }
+
+    return response()->json($news);
+}
 
     // Update a news article
     public function update(Request $request, $id)

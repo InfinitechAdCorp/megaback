@@ -78,19 +78,17 @@ public function store(Request $request)
 
     return response()->json($closedDeal, 201);
 }
-    // Get a single closed deal by ID
-    public function show($id)
-    {
-        $closedDeal = ClosedDeal::find($id);
+// Get a single closed deal by ID
+public function show($id)
+{
+    $closedDeal = ClosedDeal::find($id);
 
-        if (!$closedDeal) {
-            return response()->json(['message' => 'Closed deal not found'], 404);
-        }
-
-        $closedDeal->image = asset($closedDeal->image);
-
-        return response()->json($closedDeal);
+    if (!$closedDeal) {
+        return response()->json(['message' => 'Closed deal not found'], 404);
     }
+
+    return response()->json($closedDeal);
+}
 
     // Update a closed deal
     public function update(Request $request, $id)

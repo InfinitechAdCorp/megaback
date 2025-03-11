@@ -48,19 +48,16 @@ class MeetingController extends Controller
     }
 
     // Get a single meeting by ID
-    public function show($id)
-    {
-        $meeting = Meeting::find($id);
+public function show($id)
+{
+    $meeting = Meeting::find($id);
 
-        if (!$meeting) {
-            return response()->json(['message' => 'Meeting not found'], 404);
-        }
-
-        // Return the full URL of the image (public access)
-        $meeting->image = asset($meeting->image);
-
-        return response()->json($meeting);
+    if (!$meeting) {
+        return response()->json(['message' => 'Meeting not found'], 404);
     }
+
+    return response()->json($meeting);
+}
 
     public function update(Request $request, $id)
     {
