@@ -11,8 +11,96 @@ use App\Mail\AccountApprovedMail;
 use App\Mail\VerificationMail;
 use Illuminate\Support\Facades\Log;
 
+
+use App\Models\Otp;
+use Carbon\Carbon;
+
 class AuthController extends Controller
 {
+public function sendOtp(Request $request) {
+    // Check if the email exists before validating
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user) {
+        return response()->json(['message' => 'Email not registered.'], 404);
+    }
+
+    // Validate email format (removing 'exists' rule)
+    $request->validate([
+        'email' => 'required|email'
+    ]);
+
+    // Check if user is verified
+    if (!$user->is_verified) {
+        return response()->json(['message' => 'Email is not verified. Please verify your email first.'], 400);
+    }
+
+    // Generate OTP
+    $otp = rand(100000, 999999);
+
+    // Store OTP in the database
+    Otp::updateOrCreate(
+        ['email' => $request->email],
+        ['otp' => $otp, 'expires_at' => Carbon::now()->addMinutes(5)]
+    );
+
+    // Send OTP via email
+    try {
+        Mail::raw("Your OTP for password reset is: $otp", function ($message) use ($request) {
+            $message->to($request->email)->subject('Password Reset OTP');
+        });
+
+        return response()->json(['message' => 'OTP sent to your email']);
+    } catch (\Exception $e) {
+        return response()->json(['message' => 'Failed to send OTP. Try again later.'], 500);
+    }
+}
+
+
+    // 🔹 VERIFY OTP
+    public function verifyOtp(Request $request) {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required|digits:6',
+        ]);
+
+        // Find OTP record
+        $otpRecord = Otp::where('email', $request->email)->where('otp', $request->otp)->first();
+
+        // Check if OTP exists and is still valid
+        if (!$otpRecord || Carbon::now()->greaterThan($otpRecord->expires_at)) {
+            return response()->json(['message' => 'Invalid or expired OTP'], 400);
+        }
+
+        // Mark OTP as verified (optional: delete it after verification)
+        return response()->json(['message' => 'OTP verified successfully']);
+    }
+
+    // 🔹 RESET PASSWORD
+    public function resetPassword(Request $request) {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'otp' => 'required|digits:6',
+            'password' => 'required|min:6',
+        ]);
+
+        // Check OTP
+        $otpRecord = Otp::where('email', $request->email)->where('otp', $request->otp)->first();
+
+        if (!$otpRecord || Carbon::now()->greaterThan($otpRecord->expires_at)) {
+            return response()->json(['message' => 'Invalid or expired OTP'], 400);
+        }
+
+        // Reset password
+        $user = User::where('email', $request->email)->first();
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        // Delete OTP after successful reset
+        $otpRecord->delete();
+
+        return response()->json(['message' => 'Password reset successfully']);
+    }
 public function register(Request $request)
 {
     // Validate user input

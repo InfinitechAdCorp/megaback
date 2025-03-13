@@ -27,7 +27,8 @@ use App\Http\Controllers\{
     AuthController,
     ScheduledVisitController,
     PropertyInquiryController,
-    ClientAppointmentController
+    ClientAppointmentController,
+    ClientPropertyController
 };
 
 Route::get('/verification/{id}', function ($id) {
@@ -65,11 +66,23 @@ Route::get('/verification/{id}', function ($id) {
 Route::post('/save-subscription', [PushNotificationController::class, 'saveSubscription']);
 Route::post('/send-notification', [PushNotificationController::class, 'sendNotification']);
 
+Route::post('/send-otp', [AuthController::class, 'sendOtp']);
+Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/login', [AuthController::class, 'login']); 
 
+Route::prefix('clientproperty')->group(function () {
+    Route::post('/', [ClientPropertyController::class, 'store']);  // Create a new client appointment
+    Route::middleware('auth:sanctum')->group(function () {
+            Route::put('/status', [ClientPropertyController::class, 'updateStatus']);  // Fetch all appointments
+        Route::get('/', [ClientPropertyController::class, 'index']);  // Fetch all appointments
+        Route::get('/{id}', [ClientPropertyController::class, 'show']);  // Fetch a specific appointment by ID
+        Route::put('/{id}', [ClientPropertyController::class, 'update']);  // Update a client appointment
+        Route::delete('/{id}', [ClientPropertyController::class, 'destroy']);  // Delete a client appointment
+    });
+});
 Route::prefix('clientappointments')->group(function () {
-   
     Route::post('/', [ClientAppointmentController::class, 'store']);  // Create a new client appointment
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [ClientAppointmentController::class, 'index']);  // Fetch all appointments
@@ -80,28 +93,6 @@ Route::prefix('clientappointments')->group(function () {
     });
 });
 
-Route::prefix('propertyinquiry')->group(function () {
-    Route::get('/', [PropertyInquiryController::class, 'index']); 
-    Route::get('/{id}', [PropertyInquiryController::class, 'show']); 
-    Route::post('/', [PropertyInquiryController::class, 'store']); 
-    Route::put('/status', [PropertyInquiryController::class, 'updateStatus']);
-
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::put('/{id}', [PropertyInquiryController::class, 'update']); 
-        Route::delete('/{id}', [PropertyInquiryController::class, 'destroy']); 
-    });
-});
-Route::prefix('schedulevisit')->group(function () {
-    Route::get('/', [ScheduledVisitController::class, 'index']); 
-    Route::get('/{id}', [ScheduledVisitController::class, 'show']); 
-    Route::post('/', [ScheduledVisitController::class, 'store']); 
-    Route::put('/status', [ScheduledVisitController::class, 'updateStatus']);
-
-    Route::middleware('auth:sanctum')->group(function () {
-        // Route::put('/{id}', [ScheduledVisitController::class, 'update']); 
-        Route::delete('/{id}', [ScheduledVisitController::class, 'destroy']); 
-    });
-});
 
 Route::prefix('office')->group(function () {
     Route::get('/', [OfficeController::class, 'index']); 

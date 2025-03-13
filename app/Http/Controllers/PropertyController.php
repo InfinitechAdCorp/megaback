@@ -82,10 +82,10 @@ public function store(Request $request)
         'parkingLots' => 'required|integer',
         'masterPlan' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         'amenities' => 'nullable|array',
-        'amenities.*.name' => 'required|string',
+        'amenities.*.name' => 'nullable|string',
         'amenities.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         'features' => 'nullable|array',
-        'features.*.name' => 'required|string',
+        'features.*.name' => 'nullable|string',
     ]);
 
     // Ensure directory exists for storing images
@@ -253,7 +253,6 @@ public function updateAmenities(Request $request, $id)
 
 
 
-
 public function updateProperty(Request $request, $id)
 {
     $property = Property::find($id);
@@ -264,12 +263,11 @@ public function updateProperty(Request $request, $id)
 
     \Log::info('Received Update Request:', $request->all());
 
-    // Validate request
     $request->validate([
         'name' => 'required|string|max:255',
         'description' => 'required|string',
         'specificLocation' => 'required|string',
-        'units' => 'required|string', // Expect JSON string
+        'units' => 'required|string',
         'priceRange' => 'required|string',
         'lotArea' => 'required|string',
         'location' => 'required|string',
@@ -281,10 +279,10 @@ public function updateProperty(Request $request, $id)
         'masterPlan' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
     ]);
 
-    // 🔹 Fix `units` (Ensure it is stored as an array)
+    // 🔹 Ensure `units` is an array
     $property->units = is_string($request->units) ? json_decode($request->units, true) : $request->units;
 
-    // 🔹 Handle Image Upload Properly
+    // 🔹 Handle Image Upload (Keep old if no new file)
     if ($request->hasFile('image')) {
         $image = $request->file('image');
         $imageName = time() . '-' . $image->getClientOriginalName();
@@ -292,6 +290,7 @@ public function updateProperty(Request $request, $id)
         $property->image = '/properties/' . $imageName;
     }
 
+    // 🔹 Handle Master Plan Upload (Keep old if no new file)
     if ($request->hasFile('masterPlan')) {
         $masterPlan = $request->file('masterPlan');
         $masterPlanName = time() . '-' . $masterPlan->getClientOriginalName();
@@ -299,25 +298,26 @@ public function updateProperty(Request $request, $id)
         $property->masterPlan = '/properties/' . $masterPlanName;
     }
 
-    // 🔹 Assign Other Fields
-    $property->name = $request->name;
-    $property->description = $request->description;
-    $property->specificLocation = $request->specificLocation;
-    $property->priceRange = $request->priceRange;
-    $property->lotArea = $request->lotArea;
-    $property->location = $request->location;
-    $property->status = $request->status;
-    $property->developmentType = $request->developmentType;
-    $property->floors = $request->floors ?? 0;
-    $property->parkingLots = $request->parkingLots ?? 0;
+    // 🔹 Assign Other Fields (Preserve old values if not sent)
+    $property->name = $request->name ?? $property->name;
+    $property->description = $request->description ?? $property->description;
+    $property->specificLocation = $request->specificLocation ?? $property->specificLocation;
+    $property->priceRange = $request->priceRange ?? $property->priceRange;
+    $property->lotArea = $request->lotArea ?? $property->lotArea;
+    $property->location = $request->location ?? $property->location;
+    $property->status = $request->status ?? $property->status;
+    $property->developmentType = $request->developmentType ?? $property->developmentType;
+    $property->floors = $request->floors ?? $property->floors;
+    $property->parkingLots = $request->parkingLots ?? $property->parkingLots;
 
-    // 🔹 Ensure the Data is Saved
+    // 🔹 Save Changes
     $property->save();
 
     \Log::info('Updated Property:', ['id' => $property->id, 'data' => $property]);
 
     return response()->json($property);
 }
+
 
 
 
