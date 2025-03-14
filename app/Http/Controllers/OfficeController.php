@@ -86,11 +86,14 @@ public function show($id)
         return response()->json(['message' => 'Office not found'], 404);
     }
 
-    // Convert amenities JSON string to an array
-    $office->amenities = json_decode($office->amenities, true);
+    // ✅ Decode only if amenities is a JSON string
+    if (is_string($office->amenities)) {
+        $office->amenities = json_decode($office->amenities, true);
+    }
 
     return response()->json($office);
 }
+
 
 public function update(Request $request, $id)
 {
